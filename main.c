@@ -111,15 +111,15 @@ int main (int argc, char *argv[])
   printf("DIMS: %d x %d\n", rw, cl);
 
 
-//#pragma omp parallel for
   
   for (it = 0; it < 1000; ++it)
   {
 
        // une itération de la diffusion
+#pragma omp parallel for private(j)
        for (i = 0; i < rw; ++i)
        {
-	    for (j = 0; j < cl; ++j)
+	    for (j = 0; j < cl; ++j) // note: j MUST be private
 	    {
 		 
 		 float laplacian =
