@@ -76,17 +76,17 @@ int main (int argc, char *argv[])
   // A COMPLETER SELON LE DERNIER COURS :-)
 
 
-
+  // mon pc n'a que 2 coeurs
   omp_set_num_threads(2);
-  
-  
   
   printf("DIMS: %d x %d\n", rw, cl);
 
+  t0 = omp_get_wtime ();     
 
+  // inutile d'optimiser celà
   for (i = 0; i < rw; ++i)
   {
-       for (j = 0; j < cl; ++j) // note: j MUST be private
+       for (j = 0; j < cl; ++j)
        {
 	    C[i + j*rw] = C[i+j*rw]*dt/255.;
        }
@@ -97,11 +97,15 @@ int main (int argc, char *argv[])
   {
 
        // une itération de la diffusion
+       // on notera que la répatition statique (par défault),
+       // est la plus adaptée à ce cas, où les temps de calculs
+       // sont complètement homogènes
 #pragma omp parallel for private(i, j)
        for (j = 1; j < cl-1; ++j)
        {
 	    for (i = 1; i < rw-1; ++i)
 	    {
+		 
 		 Tdt[i + j*rw] = T[i + j*rw]
 		      + C[i + j*rw]*(
 			   T[i+1 + rw*j] + T[i-1 + rw*j]
