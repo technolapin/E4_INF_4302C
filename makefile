@@ -7,7 +7,7 @@ clean:
 	- rm *.out
 
 compile:
-	gcc -lm -Werror -fopenmp main.c function.c -o heat.out
+	gcc -fopt-info-vec-all -O3 -lm -Werror -fopenmp main.c function.c -o heat.out
 
 
 gif: gif_compile run gif_convert

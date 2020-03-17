@@ -104,25 +104,25 @@ int main (int argc, char *argv[])
 
 
 
-  omp_set_num_threads(4);
+  omp_set_num_threads(2);
   
   
   
   printf("DIMS: %d x %d\n", rw, cl);
 
 
-  
+  float laplacian;
   for (it = 0; it < 1000; ++it)
   {
 
        // une itération de la diffusion
-#pragma omp parallel for private(j)
+#pragma omp parallel for private(j, laplacian)
        for (i = 0; i < rw; ++i)
        {
 	    for (j = 0; j < cl; ++j) // note: j MUST be private
 	    {
 		 
-		 float laplacian =
+		 laplacian =
 		      get_cell(T, i+1, j, rw, cl) + get_cell(T, i-1, j, rw, cl)
 		      + get_cell(T, i, j+1, rw, cl) + get_cell(T, i, j-1, rw, cl)		      - 4.*get_cell(T, i, j, rw, cl);
 		 
@@ -159,7 +159,6 @@ int main (int argc, char *argv[])
   }
 
 
-  
   
   double  t1 = omp_get_wtime ();
   double  temps_reel=t1-t0;
