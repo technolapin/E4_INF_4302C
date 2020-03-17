@@ -98,10 +98,9 @@ int main (int argc, char *argv[])
 
        // une itération de la diffusion
 #pragma omp parallel for private(i, j)
-       for (i = 1; i < rw-1; ++i)
+       for (j = 1; j < cl-1; ++j)
        {
-	    
-	    for (j = 1; j < cl-1; ++j) // note: j MUST be private
+	    for (i = 1; i < rw-1; ++i)
 	    {
 		 Tdt[i + j*rw] = T[i + j*rw]
 		      + C[i + j*rw]*(
@@ -111,6 +110,10 @@ int main (int argc, char *argv[])
 			   );
 	    }
        }
+
+       // pour les coins et les bords, on "extendra" la case courante
+       // (celà revient à changer ce par quoi on divise)
+       // On gère les bords
 #pragma omp parallel for private(i)
        for (i = 1; i < rw-1; ++i)
        {
@@ -151,7 +154,8 @@ int main (int argc, char *argv[])
 		      - 3.*T[rw-1 + rw*j]
 		      );
        }
-       
+
+       // on gère les coins
        Tdt[0] = T[0]
 	    + C[0]*(
 		 T[1]
