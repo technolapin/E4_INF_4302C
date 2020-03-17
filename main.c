@@ -14,46 +14,6 @@
 #include<math.h>
 
 
-
-int
-max(int a, int b)
-{
-     if (a <= b)
-     {
-	  return a;
-     }
-     else
-     {
-	  return b;
-     }
-}
-
-int
-min(int a, int b)
-{
-     if (a >= b)
-     {
-	  return a;
-     }
-     else
-     {
-	  return b;
-     }
-}
-
-float
-get_cell(float* T, int i, int j, int rw, int cl)
-{
-     if (i < 0 || j < 0 || i >= rw || j >= cl)
-     {
-	  return 0.;
-     }
-     else
-     {
-	  return T[i + j*rw];
-     }
-}
-
 //-----------------------------------------------------------
 // MAIN FUNCTION
 //-----------------------------------------------------------
@@ -110,25 +70,90 @@ int main (int argc, char *argv[])
   
   printf("DIMS: %d x %d\n", rw, cl);
 
-
-  float laplacian;
   for (it = 0; it < 1000; ++it)
   {
 
        // une itération de la diffusion
-#pragma omp parallel for private(j, laplacian)
-       for (i = 0; i < rw; ++i)
+#pragma omp parallel for private(i, j)
+       for (i = 1; i < rw-1; ++i)
        {
-	    for (j = 0; j < cl; ++j) // note: j MUST be private
+	    
+	    for (j = 1; j < cl-1; ++j) // note: j MUST be private
 	    {
 		 
-		 laplacian =
-		      get_cell(T, i+1, j, rw, cl) + get_cell(T, i-1, j, rw, cl)
-		      + get_cell(T, i, j+1, rw, cl) + get_cell(T, i, j-1, rw, cl)		      - 4.*get_cell(T, i, j, rw, cl);
 		 
-		 Tdt[i + j*rw] = fmax(fmin(T[i + j*rw] + dt*laplacian, v), 0.);
+		 Tdt[i + j*rw] = T[i + j*rw]
+		      + dt*(
+			   T[i+1 + rw*j] + T[i-1 + rw*j]
+			   + T[i + rw*(j+1)] + T[i + rw*(j-1)]
+			   - 4.*T[i + rw*j]
+			   );
 	    }
        }
+
+       for (i = 1; i < rw-1; ++i)
+       {
+	    Tdt[i] = T[i]
+		 + dt*(
+		      T[i+1] + T[i-1]
+		      + T[i + rw]
+		      - 3.*T[i]
+		      );
+       } 
+       for (i = 1; i < rw-1; ++i)
+       {
+	    Tdt[i + (cl-1)*rw] = T[i + (cl-1)*rw]
+		 + dt*(
+		      T[i+1 + rw*(cl-1)] + T[i-1 + rw*(cl-1)]
+		      + T[i + rw*(cl-2)]
+		      - 3.*T[i + rw*(cl-1)]
+		      );
+       }
+       for (j = 1; j < cl-1; ++j)
+       {
+	    Tdt[j*rw] = T[j*rw]
+		 + dt*(
+		      T[1 + rw*j]
+		      + T[rw*(j+1)] + T[rw*(j-1)]
+		      - 3.*T[rw*j]
+		      );
+       } 
+       for (j = 1; j < cl-1; ++j)
+       {
+	    
+	    
+	    Tdt[rw-1 + j*rw] = T[rw-1 + j*rw]
+		 + dt*(
+		      T[rw-2 + rw*j]
+			   + T[rw-1 + rw*(j+1)] + T[rw-1 + rw*(j-1)]
+		      - 3.*T[rw-1 + rw*j]
+		      );
+       }
+       
+       Tdt[0] = T[0]
+	    + dt*(
+		 T[1]
+		 + T[rw]
+		 - 2.*T[0]
+		 );
+       Tdt[rw-1] = T[rw-1]
+	    + dt*(
+		 T[rw - 2]
+		 + T[2*rw-1]
+		 - 2.*T[rw-1]
+		 );
+       Tdt[rw*(cl-1)] = T[rw*(cl-1)]
+	    + dt*(
+		 T[rw*(cl-1)+1]
+		 + T[rw*(cl-2)]
+		 - 2.*T[rw*(cl-1)]
+		 );
+       Tdt[rw*cl-1] = T[rw*cl-1]
+	    + dt*(
+		 T[rw*cl-2]
+		 + T[rw*(cl-1)-1]
+		 - 2.*T[rw*cl-1]
+		 );
 
        ///////////////////////////////////////////////////
        /////// juste pour quand on veut produire un gif
