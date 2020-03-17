@@ -111,7 +111,7 @@ int main (int argc, char *argv[])
 			   );
 	    }
        }
-
+#pragma omp parallel for private(i)
        for (i = 1; i < rw-1; ++i)
        {
 	    Tdt[i] = T[i]
@@ -121,6 +121,7 @@ int main (int argc, char *argv[])
 		      - 3.*T[i]
 		      );
        } 
+#pragma omp parallel for private(i)
        for (i = 1; i < rw-1; ++i)
        {
 	    Tdt[i + (cl-1)*rw] = T[i + (cl-1)*rw]
@@ -130,6 +131,7 @@ int main (int argc, char *argv[])
 		      - 3.*T[i + rw*(cl-1)]
 		      );
        }
+#pragma omp parallel for private(j)
        for (j = 1; j < cl-1; ++j)
        {
 	    Tdt[j*rw] = T[j*rw]
@@ -139,6 +141,7 @@ int main (int argc, char *argv[])
 		      - 3.*T[rw*j]
 		      );
        } 
+#pragma omp parallel for private(j)
        for (j = 1; j < cl-1; ++j)
        {
 	    Tdt[rw-1 + j*rw] = T[rw-1 + j*rw]
@@ -201,18 +204,6 @@ int main (int argc, char *argv[])
        T = Tdt;
        Tdt = swap;
   }
-
-  /*
-
-  for (i = 0; i < rw; ++i)
-  {
-	    
-       for (j = 0; j < cl; ++j) // note: j MUST be private
-       {
-	    T[i+j*rw] = fmin(255., fmax(T[i+j*rw], 0.));
-       }
-  }
-  */
 
   
   double  t1 = omp_get_wtime ();
