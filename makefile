@@ -1,7 +1,7 @@
 all: clean compile run
 
 run:
-	./heat.out lain.pgm processed.pgm
+	./heat.out lain.pgm conductivity.pgm processed.pgm
 
 clean:
 	- rm *.out

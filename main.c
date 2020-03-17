@@ -22,7 +22,8 @@ int main (int argc, char *argv[])
  
   // noms des fichiers d'entrée et de sortie
   char *filename=argv[1];
-  char *file_out=argv[2];
+  char *conductivity=argv[2];
+  char *file_out=argv[3];
 
   char frame[100];
   
@@ -31,24 +32,36 @@ int main (int argc, char *argv[])
   float *Tdt;
   float *swap;
 
+  float *C;
+
+  
   // dimension de matrice, valeur maximale
   int v;  // max  value in matrix
   int rw; // row size
   int cl; // column size
 
   // vérification des arguments d'entrée
-  if (argc != 3)
-    {  fprintf(stderr,"Input parameters missing:\n./program_name <inpout.pgm> <output.pgm>\n");
+  if (argc != 4)
+    {  fprintf(stderr,"Input parameters missing:\n./program_name <inpout.pgm> <conductivity.pgm> <output.pgm>\n");
       return(0);
     }
 
   
+  
   //-------------------------------------------------------------
   // OPEN DATA FILE AND ALLOCATE INPUT IMAGE MEMORY (float precision)
   //-------------------------------------------------------------
+  int crw, ccl;
   T = readimg(filename, &rw, &cl, &v);
+  C = readimg(conductivity, &crw, &ccl, &v);
   Tdt = (float *) calloc (rw*cl,sizeof(float));
- 
+
+  if (crw != rw || ccl != ccl)
+  {
+       fprintf(stderr,"Images size missmatch \n");
+       return(0);
+  }
+  
   //-------------------------------------------------------------
   // PUT HERE THE NUMERICAL SOLUTION OF HEAT EQUATION
   // complete variables necessary for for the numerical scheme computing
@@ -70,6 +83,16 @@ int main (int argc, char *argv[])
   
   printf("DIMS: %d x %d\n", rw, cl);
 
+
+  for (i = 0; i < rw; ++i)
+  {
+       for (j = 0; j < cl; ++j) // note: j MUST be private
+       {
+	    C[i + j*rw] = C[i+j*rw]*dt/255.;
+       }
+  }
+
+  
   for (it = 0; it < 1000; ++it)
   {
 
@@ -80,10 +103,8 @@ int main (int argc, char *argv[])
 	    
 	    for (j = 1; j < cl-1; ++j) // note: j MUST be private
 	    {
-		 
-		 
 		 Tdt[i + j*rw] = T[i + j*rw]
-		      + dt*(
+		      + C[i + j*rw]*(
 			   T[i+1 + rw*j] + T[i-1 + rw*j]
 			   + T[i + rw*(j+1)] + T[i + rw*(j-1)]
 			   - 4.*T[i + rw*j]
@@ -94,7 +115,7 @@ int main (int argc, char *argv[])
        for (i = 1; i < rw-1; ++i)
        {
 	    Tdt[i] = T[i]
-		 + dt*(
+		 + C[i]*(
 		      T[i+1] + T[i-1]
 		      + T[i + rw]
 		      - 3.*T[i]
@@ -103,7 +124,7 @@ int main (int argc, char *argv[])
        for (i = 1; i < rw-1; ++i)
        {
 	    Tdt[i + (cl-1)*rw] = T[i + (cl-1)*rw]
-		 + dt*(
+		 + C[i + (cl-1)*rw]*(
 		      T[i+1 + rw*(cl-1)] + T[i-1 + rw*(cl-1)]
 		      + T[i + rw*(cl-2)]
 		      - 3.*T[i + rw*(cl-1)]
@@ -112,7 +133,7 @@ int main (int argc, char *argv[])
        for (j = 1; j < cl-1; ++j)
        {
 	    Tdt[j*rw] = T[j*rw]
-		 + dt*(
+		 + C[j*rw]*(
 		      T[1 + rw*j]
 		      + T[rw*(j+1)] + T[rw*(j-1)]
 		      - 3.*T[rw*j]
@@ -120,10 +141,8 @@ int main (int argc, char *argv[])
        } 
        for (j = 1; j < cl-1; ++j)
        {
-	    
-	    
 	    Tdt[rw-1 + j*rw] = T[rw-1 + j*rw]
-		 + dt*(
+		 + C[rw-1 + j*rw]*(
 		      T[rw-2 + rw*j]
 			   + T[rw-1 + rw*(j+1)] + T[rw-1 + rw*(j-1)]
 		      - 3.*T[rw-1 + rw*j]
@@ -131,25 +150,25 @@ int main (int argc, char *argv[])
        }
        
        Tdt[0] = T[0]
-	    + dt*(
+	    + C[0]*(
 		 T[1]
 		 + T[rw]
 		 - 2.*T[0]
 		 );
        Tdt[rw-1] = T[rw-1]
-	    + dt*(
+	    + C[rw-1]*(
 		 T[rw - 2]
 		 + T[2*rw-1]
 		 - 2.*T[rw-1]
 		 );
        Tdt[rw*(cl-1)] = T[rw*(cl-1)]
-	    + dt*(
+	    + C[rw*(cl-1)]*(
 		 T[rw*(cl-1)+1]
 		 + T[rw*(cl-2)]
 		 - 2.*T[rw*(cl-1)]
 		 );
        Tdt[rw*cl-1] = T[rw*cl-1]
-	    + dt*(
+	    + C[rw*cl-1]*(
 		 T[rw*cl-2]
 		 + T[rw*(cl-1)-1]
 		 - 2.*T[rw*cl-1]
@@ -183,6 +202,17 @@ int main (int argc, char *argv[])
        Tdt = swap;
   }
 
+  /*
+
+  for (i = 0; i < rw; ++i)
+  {
+	    
+       for (j = 0; j < cl; ++j) // note: j MUST be private
+       {
+	    T[i+j*rw] = fmin(255., fmax(T[i+j*rw], 0.));
+       }
+  }
+  */
 
   
   double  t1 = omp_get_wtime ();
