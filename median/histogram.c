@@ -162,3 +162,9 @@ histo_free(Histogram * histo)
      free(histo->entries);
      free(histo->bins);
 }
+
+float
+histo_smart_median(Histogram* histo)
+{
+     return histo_intern_to_float(histo, histo->median_bin);
+}

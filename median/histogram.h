@@ -56,3 +56,6 @@ histo_print(Histogram* histo);
 
 void
 histo_free(Histogram * histo);
+
+float
+histo_smart_median(Histogram* histo);

@@ -64,13 +64,16 @@ void median_opt(float *input, float *output, int radius, int len)
   for (int i = len - radius; i < len; ++i)
     output[i] = 0.;
 
+  //init the histogram
   for (int i = 0; i < ksize; ++i)
   {
     histo_push(&histo, input[i]);
   }
   
-  for (int i = radius; i + radius < len; ++i) {
-      output[i] = histo_stupid_median(&histo);
+  int i;
+  
+  for (i = radius; i < len-radius; ++i) {
+      output[i] = histo_smart_median(&histo);
       histo_push(&histo, input[i + radius]);
   }
 
